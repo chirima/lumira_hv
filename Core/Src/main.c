@@ -45,10 +45,10 @@
 #define ADC_MAX_COUNTS (4095.0)
 #define NEUTRAL_ADC_COUNTS (2048.0)
 
-#define ADC_DELAY_CALIB_ENABLE_CPU_CYCLES          (LL_ADC_DELAY_CALIB_ENABLE_ADC_CYCLES * 32)
-#define VDDA_APPLI                                 (3300U)
-#define ADC_DATA_BUFFER_SIZE                       (8U)
-#define MSG_BUFFER_SIZE							   (64U)
+#define ADC_DELAY_CALIB_ENABLE_CPU_CYCLES (LL_ADC_DELAY_CALIB_ENABLE_ADC_CYCLES * 32)
+#define VDDA_APPLI (3300U)
+#define ADC_DATA_BUFFER_SIZE (8U)
+#define MSG_BUFFER_SIZE (64U)
 /* USER CODE END PD */
 
 /* Private macro -------------------------------------------------------------*/
@@ -59,8 +59,8 @@
 /* Private variables ---------------------------------------------------------*/
 
 /* USER CODE BEGIN PV */
-uint8_t voltageRawValue[ADC_DATA_BUFFER_SIZE];
-__IO uint8_t adcDmaTransferStatus = 0;
+uint16_t voltageRawValue[ADC_DATA_BUFFER_SIZE];
+__IO uint8_t adcDmaTransferStatus = 2; // 2 = idle / nothing ready yet;
 /* USER CODE END PV */
 
 /* Private function prototypes -----------------------------------------------*/
@@ -91,8 +91,8 @@ int main(void)
 {
 
   /* USER CODE BEGIN 1 */
-	uint8_t startIndex = 0;
-	uint8_t endIndex = 0;
+  uint8_t startIndex = 0;
+  uint8_t endIndex = 0;
   /* USER CODE END 1 */
 
   /* MCU Configuration--------------------------------------------------------*/
@@ -135,23 +135,23 @@ int main(void)
 
   while (1)
   {
-	  if((adcDmaTransferStatus == 1) || (adcDmaTransferStatus == 0))
-	  {
-		  startIndex = adcDmaTransferStatus ? ADC_DATA_BUFFER_SIZE/2 : 0;
-		  endIndex = startIndex + ADC_DATA_BUFFER_SIZE/2;
+    if ((adcDmaTransferStatus == 1) || (adcDmaTransferStatus == 0))
+    {
+      startIndex = adcDmaTransferStatus ? ADC_DATA_BUFFER_SIZE / 2 : 0;
+      endIndex = startIndex + ADC_DATA_BUFFER_SIZE / 2;
 
-		  for (uint8_t index = startIndex; index < endIndex; index++)
-		  {
-			  snprintf(buf, sizeof(buf), "ADC ch[%d]: %ld\r\n", index,
-					  __LL_ADC_CALC_DATA_TO_VOLTAGE(VDDA_APPLI, voltageRawValue[index], LL_ADC_RESOLUTION_8B));
-			  USART1_Write(buf);
-		  }
+      for (uint8_t index = startIndex; index < endIndex; index++)
+      {
+        snprintf(buf, sizeof(buf), "ADC ch[%d]: %ld\r\n", index,
+                 __LL_ADC_CALC_DATA_TO_VOLTAGE(VDDA_APPLI, voltageRawValue[index], LL_ADC_RESOLUTION_12B));
+        USART1_Write(buf);
+      }
 
-		  adcDmaTransferStatus = 2;
-	  }
+      adcDmaTransferStatus = 2;
+    }
 
-	  /* slow down printing so UART keeps up */
-	  LL_mDelay(500);   // 1000 ms
+    /* slow down printing so UART keeps up */
+    LL_mDelay(500); // 1000 ms
     /* USER CODE END WHILE */
 
     /* USER CODE BEGIN 3 */
@@ -217,32 +217,8 @@ static void MX_ADC1_Init(void)
   LL_IOP_GRP1_EnableClock(LL_IOP_GRP1_PERIPH_GPIOA);
   /**ADC1 GPIO Configuration
   PA0   ------> ADC1_IN0
-  PA1   ------> ADC1_IN1
-  PA2   ------> ADC1_IN2
-  PA3   ------> ADC1_IN3
-  PA4   ------> ADC1_IN4
   */
   GPIO_InitStruct.Pin = LL_GPIO_PIN_0;
-  GPIO_InitStruct.Mode = LL_GPIO_MODE_ANALOG;
-  GPIO_InitStruct.Pull = LL_GPIO_PULL_NO;
-  LL_GPIO_Init(GPIOA, &GPIO_InitStruct);
-
-  GPIO_InitStruct.Pin = LL_GPIO_PIN_1;
-  GPIO_InitStruct.Mode = LL_GPIO_MODE_ANALOG;
-  GPIO_InitStruct.Pull = LL_GPIO_PULL_NO;
-  LL_GPIO_Init(GPIOA, &GPIO_InitStruct);
-
-  GPIO_InitStruct.Pin = LL_GPIO_PIN_2;
-  GPIO_InitStruct.Mode = LL_GPIO_MODE_ANALOG;
-  GPIO_InitStruct.Pull = LL_GPIO_PULL_NO;
-  LL_GPIO_Init(GPIOA, &GPIO_InitStruct);
-
-  GPIO_InitStruct.Pin = LL_GPIO_PIN_3;
-  GPIO_InitStruct.Mode = LL_GPIO_MODE_ANALOG;
-  GPIO_InitStruct.Pull = LL_GPIO_PULL_NO;
-  LL_GPIO_Init(GPIOA, &GPIO_InitStruct);
-
-  GPIO_InitStruct.Pin = LL_GPIO_PIN_4;
   GPIO_InitStruct.Mode = LL_GPIO_MODE_ANALOG;
   GPIO_InitStruct.Pull = LL_GPIO_PULL_NO;
   LL_GPIO_Init(GPIOA, &GPIO_InitStruct);
@@ -290,17 +266,15 @@ static void MX_ADC1_Init(void)
   LL_ADC_REG_SetSequencerConfigurable(ADC1, LL_ADC_REG_SEQ_FIXED);
   ADC_REG_InitStruct.TriggerSource = LL_ADC_REG_TRIG_EXT_TIM3_TRGO;
   ADC_REG_InitStruct.SequencerLength = LL_ADC_REG_SEQ_SCAN_DISABLE;
-  ADC_REG_InitStruct.SequencerDiscont = LL_ADC_REG_SEQ_DISCONT_1RANK;
+  ADC_REG_InitStruct.SequencerDiscont = LL_ADC_REG_SEQ_DISCONT_DISABLE;
   ADC_REG_InitStruct.ContinuousMode = LL_ADC_REG_CONV_SINGLE;
-  ADC_REG_InitStruct.DMATransfer = LL_ADC_REG_DMA_TRANSFER_LIMITED;
+  ADC_REG_InitStruct.DMATransfer = LL_ADC_REG_DMA_TRANSFER_UNLIMITED;
   ADC_REG_InitStruct.Overrun = LL_ADC_REG_OVR_DATA_PRESERVED;
   LL_ADC_REG_Init(ADC1, &ADC_REG_InitStruct);
   LL_ADC_REG_SetSequencerScanDirection(ADC1, LL_ADC_REG_SEQ_SCAN_DIR_FORWARD);
   LL_ADC_SetOverSamplingScope(ADC1, LL_ADC_OVS_DISABLE);
   LL_ADC_SetTriggerFrequencyMode(ADC1, LL_ADC_CLOCK_FREQ_MODE_HIGH);
-  LL_ADC_REG_SetSequencerChAdd(ADC1, LL_ADC_CHANNEL_0|LL_ADC_CHANNEL_1
-                              |LL_ADC_CHANNEL_2|LL_ADC_CHANNEL_3
-                              |LL_ADC_CHANNEL_4);
+  LL_ADC_REG_SetSequencerChAdd(ADC1, LL_ADC_CHANNEL_0);
 
    /* Poll for ADC channel configuration ready */
    #if (USE_TIMEOUT == 1)
@@ -512,93 +486,97 @@ static void MX_GPIO_Init(void)
 /* USER CODE BEGIN 4 */
 void ADC_Calibration_Start()
 {
-	__IO uint32_t wait_loop_index = 0U;
-	__IO uint32_t backup_setting_adc_dma_transfer = 0U;
+  __IO uint32_t wait_loop_index = 0U;
+  __IO uint32_t backup_setting_adc_dma_transfer = 0U;
 
-	// Check if ADC is disabled
-	if (LL_ADC_IsEnabled(ADC1) == 0)
-	{
-		LL_ADC_EnableInternalRegulator(ADC1);
-		// Delay for ADC Internal voltage regulator stabilisation
-		wait_loop_index = (LL_ADC_DELAY_INTERNAL_REGUL_STAB_US * (SystemCoreClock / (100000 *2)) / 10);
+  // Check if ADC is disabled
+  if (LL_ADC_IsEnabled(ADC1) == 0)
+  {
+    LL_ADC_EnableInternalRegulator(ADC1);
+    // Delay for ADC Internal voltage regulator stabilisation
+    wait_loop_index = (LL_ADC_DELAY_INTERNAL_REGUL_STAB_US * (SystemCoreClock / (100000 * 2)) / 10);
 
-		while(wait_loop_index != 0)
-		{
-			wait_loop_index--;
-		}
+    while (wait_loop_index != 0)
+    {
+      wait_loop_index--;
+    }
 
-		/* Disable ADC DMA transfer request during calibration */
-		backup_setting_adc_dma_transfer = LL_ADC_REG_GetDMATransfer(ADC1);
-		LL_ADC_REG_SetDMATransfer(ADC1, LL_ADC_REG_DMA_TRANSFER_NONE);
+    /* Disable ADC DMA transfer request during calibration */
+    backup_setting_adc_dma_transfer = LL_ADC_REG_GetDMATransfer(ADC1);
+    LL_ADC_REG_SetDMATransfer(ADC1, LL_ADC_REG_DMA_TRANSFER_NONE);
 
-		/* Run ADC self calibration */
-		LL_ADC_StartCalibration(ADC1);
+    /* Run ADC self calibration */
+    LL_ADC_StartCalibration(ADC1);
 
-		/* Poll for ADC effectively calibrated */
-		wait_loop_index = (ADC_DELAY_CALIB_ENABLE_CPU_CYCLES >> 1);
-		while (LL_ADC_IsCalibrationOnGoing(ADC1) != 0)
-		{
-			/* Check Systick counter flag to decrement the time-out value */
-			if (LL_SYSTICK_IsActiveCounterFlag())
-			{
-				if(wait_loop_index-- == 0)
-				{
-					/* Time-out occurred */
-				}
-			}
-		}
-		/* Restore ADC DMA transfer request after calibration */
-		LL_ADC_REG_SetDMATransfer(ADC1, backup_setting_adc_dma_transfer);
-	}
+    /* Poll for ADC effectively calibrated */
+    wait_loop_index = (ADC_DELAY_CALIB_ENABLE_CPU_CYCLES >> 1);
+    while (LL_ADC_IsCalibrationOnGoing(ADC1) != 0)
+    {
+      /* Check Systick counter flag to decrement the time-out value */
+      if (LL_SYSTICK_IsActiveCounterFlag())
+      {
+        if (wait_loop_index-- == 0)
+        {
+          /* Time-out occurred */
+        }
+      }
+    }
+    /* Restore ADC DMA transfer request after calibration */
+    LL_ADC_REG_SetDMATransfer(ADC1, backup_setting_adc_dma_transfer);
+  }
 }
 
 void ADC_DMA_Start()
 {
-	/* Configure the source and the destination address */
-	LL_DMA_ConfigAddresses(DMA1, LL_DMA_CHANNEL_1, LL_ADC_DMA_GetRegAddr(ADC1,
-	LL_ADC_DMA_REG_REGULAR_DATA), (uint32_t) voltageRawValue, LL_DMA_DIRECTION_PERIPH_TO_MEMORY);
+  /* Configure the source and the destination address */
+  LL_DMA_ConfigAddresses(DMA1, LL_DMA_CHANNEL_1, LL_ADC_DMA_GetRegAddr(ADC1, LL_ADC_DMA_REG_REGULAR_DATA), (uint32_t)voltageRawValue, LL_DMA_DIRECTION_PERIPH_TO_MEMORY);
 
-	/* Set the Data Length */
-	LL_DMA_SetDataLength(DMA1, LL_DMA_CHANNEL_1, ADC_DATA_BUFFER_SIZE);
+  /* Set the Data Length */
+  LL_DMA_SetDataLength(DMA1, LL_DMA_CHANNEL_1, ADC_DATA_BUFFER_SIZE);
 
-	/* Enable DMA Transfer Interruption : Transfer complete, Half transfer, Error Transfer */
-	LL_DMA_EnableIT_TC(DMA1, LL_DMA_CHANNEL_1);
-	LL_DMA_EnableIT_HT(DMA1, LL_DMA_CHANNEL_1);
-	LL_DMA_EnableIT_TE(DMA1, LL_DMA_CHANNEL_1);
+  /* Enable DMA Transfer Interruption : Transfer complete, Half transfer, Error Transfer */
+  LL_DMA_EnableIT_TC(DMA1, LL_DMA_CHANNEL_1);
+  LL_DMA_EnableIT_HT(DMA1, LL_DMA_CHANNEL_1);
+  LL_DMA_EnableIT_TE(DMA1, LL_DMA_CHANNEL_1);
 
-	/* Enable DMA Channel */
-	LL_DMA_EnableChannel(DMA1, LL_DMA_CHANNEL_1);
+  /* Enable DMA Channel */
+  LL_DMA_EnableChannel(DMA1, LL_DMA_CHANNEL_1);
 
-	/* Enable the ADC and start the conversion*/
-	LL_ADC_Enable(ADC1);
-	LL_ADC_REG_StartConversion(ADC1);
+  /* Enable the ADC and start the conversion*/
+  LL_ADC_Enable(ADC1);
+  while (LL_ADC_IsActiveFlag_ADRDY(ADC1) == 0)
+  {
+  }
+  LL_ADC_ClearFlag_ADRDY(ADC1);
+  LL_ADC_REG_StartConversion(ADC1);
 }
 
 void TIM_Base_Start()
 {
-	LL_TIM_EnableCounter(TIM3);
+  LL_TIM_EnableCounter(TIM3);
 }
 
 void AdcDmaTransferComplete_Callback()
 {
-	adcDmaTransferStatus = 1;
+  adcDmaTransferStatus = 1;
 }
 
 void AdcDmaTransferHalf_Callback()
 {
-	adcDmaTransferStatus = 0;
+  adcDmaTransferStatus = 0;
 }
 
 void AdcDmaTransferError_Callback()
 {
-
 }
 
 void USART1_Write(const char *s)
 {
   while (*s)
   {
-    while (!LL_USART_IsActiveFlag_TXE(USART1)) { }
+    while (!LL_USART_IsActiveFlag_TXE(USART1))
+    {
+    }
     LL_USART_TransmitData8(USART1, (uint8_t)*s++);
   }
 }
