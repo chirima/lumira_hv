@@ -145,6 +145,7 @@ void SysTick_Handler(void)
  */
 void DMA1_Channel1_IRQHandler(void)
 {
+  /* USER CODE BEGIN DMA1_Channel1_IRQn 0 */
   /* Check whether DMA Transfer error caused the DMA Interruption */
   if (LL_DMA_IsActiveFlag_TE1(DMA1) == 1)
   {
@@ -153,7 +154,6 @@ void DMA1_Channel1_IRQHandler(void)
     /* Call Interruption Treatment Function */
     AdcDmaTransferError_Callback();
   }
-  /* USER CODE BEGIN DMA1_Channel1_IRQn 0 */
   else if (LL_DMA_IsActiveFlag_TC1(DMA1) == 1)
   {
     /* Check flag DMA Transfer Complete */
