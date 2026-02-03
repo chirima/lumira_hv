@@ -157,7 +157,7 @@ int main(void)
     }
 
     /* slow down printing so UART keeps up */
-    LL_mDelay(500); // 1000 ms
+    LL_mDelay(200); // 200 ms
     /* USER CODE END WHILE */
 
     /* USER CODE BEGIN 3 */
@@ -182,6 +182,7 @@ void SystemClock_Config(void)
 
   LL_RCC_HSI_SetCalibTrimming(64);
   LL_RCC_SetHSIDiv(LL_RCC_HSI_DIV_1);
+  LL_RCC_SetHSIKERDiv(LL_RCC_HSIKER_DIV_2);
   /* Set AHB prescaler*/
   LL_RCC_SetAHBPrescaler(LL_RCC_HCLK_DIV_1);
 
@@ -215,7 +216,7 @@ static void MX_ADC1_Init(void)
 
   LL_GPIO_InitTypeDef GPIO_InitStruct = {0};
 
-  LL_RCC_SetADCClockSource(LL_RCC_ADC_CLKSOURCE_SYSCLK);
+  LL_RCC_SetADCClockSource(LL_RCC_ADC_CLKSOURCE_HSIKER);
 
   /* Peripheral clock enable */
   LL_APB2_GRP1_EnableClock(LL_APB2_GRP1_PERIPH_ADC);
@@ -324,8 +325,8 @@ static void MX_ADC1_Init(void)
   LL_ADC_SetOverSamplingScope(ADC1, LL_ADC_OVS_DISABLE);
   LL_ADC_SetTriggerFrequencyMode(ADC1, LL_ADC_CLOCK_FREQ_MODE_HIGH);
   LL_ADC_REG_SetTriggerEdge(ADC1, LL_ADC_REG_TRIG_EXT_RISING);
-  LL_ADC_SetSamplingTimeCommonChannels(ADC1, LL_ADC_SAMPLINGTIME_COMMON_1, LL_ADC_SAMPLINGTIME_12CYCLES_5);
-  LL_ADC_SetSamplingTimeCommonChannels(ADC1, LL_ADC_SAMPLINGTIME_COMMON_2, LL_ADC_SAMPLINGTIME_12CYCLES_5);
+  LL_ADC_SetSamplingTimeCommonChannels(ADC1, LL_ADC_SAMPLINGTIME_COMMON_1, LL_ADC_SAMPLINGTIME_1CYCLE_5);
+  LL_ADC_SetSamplingTimeCommonChannels(ADC1, LL_ADC_SAMPLINGTIME_COMMON_2, LL_ADC_SAMPLINGTIME_160CYCLES_5);
   LL_ADC_DisableIT_EOC(ADC1);
   LL_ADC_DisableIT_EOS(ADC1);
 
